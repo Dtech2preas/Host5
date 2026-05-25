@@ -3,12 +3,14 @@ package com.example.netflixwebview
 import android.app.AlertDialog
 import android.os.Bundle
 import android.webkit.CookieManager
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.EditText
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,6 +18,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Force locale to English so WebView defaults to English
+        Locale.setDefault(Locale.ENGLISH)
+        val config = resources.configuration
+        config.setLocale(Locale.ENGLISH)
+        createConfigurationContext(config)
+        resources.updateConfiguration(config, resources.displayMetrics)
+
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webView)
@@ -46,7 +56,14 @@ class MainActivity : AppCompatActivity() {
 
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                view?.loadUrl(url ?: "")
+                val headers = mapOf("Accept-Language" to "en-US,en;q=0.9")
+                view?.loadUrl(url ?: "", headers)
+                return true
+            }
+
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                val headers = mapOf("Accept-Language" to "en-US,en;q=0.9")
+                view?.loadUrl(request?.url?.toString() ?: "", headers)
                 return true
             }
         }
@@ -64,7 +81,8 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Load") { dialog, _ ->
                 val url = editText.text.toString().trim()
                 if (url.isNotEmpty()) {
-                    webView.loadUrl(url)
+                    val headers = mapOf("Accept-Language" to "en-US,en;q=0.9")
+                    webView.loadUrl(url, headers)
                 } else {
                     showTokenInputDialog() // Show again if empty
                 }
